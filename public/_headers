@@ -1,7 +1,0 @@
-# El service worker y el manifiesto no se guardan en caché del navegador,
-# así los cambios llegan enseguida a los celulares.
-/sw.js
-  Cache-Control: no-cache
-/manifest.webmanifest
-  Content-Type: application/manifest+json
-  Cache-Control: no-cache

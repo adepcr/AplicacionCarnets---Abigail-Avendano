@@ -4,9 +4,11 @@
 import {
   json, leerCuerpo, leerCedula, leerFecha, estaBloqueado, registrarFallo,
   esAfiliadoActivo, datosCarnet, MENSAJE_BLOQUEO
-} from "../../lib/comun.js";
+} from "../lib/comun.js";
+import { supabase } from "../lib/supabase.js";
 
-export async function onRequestPost({ request, env }) {
+export async function POST(request) {
+  const env = process.env;
   const cuerpo = await leerCuerpo(request);
   const cedula = leerCedula(cuerpo.cedula);
   const nacimiento = leerFecha(cuerpo.nacimiento);
@@ -21,10 +23,7 @@ export async function onRequestPost({ request, env }) {
     return json({ estado: "no-afiliado" });
   }
 
-  const carnet = await env.DB
-    .prepare("SELECT * FROM carnets WHERE cedula = ?")
-    .bind(cedula)
-    .first();
+  const carnet = await supabase(env).uno("carnet_carnets", { cedula: `eq.${cedula}` });
 
   if (!carnet) return json({ estado: "sin-carnet" });
 
