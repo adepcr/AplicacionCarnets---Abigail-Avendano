@@ -115,7 +115,7 @@ const fechaCrear = crearSelectorFecha($("crear-fecha"));
 // --- Foto del rostro ---
 // La foto se recorta a 3:4 (como foto de carnet) y se comprime en el celular
 // antes de enviarla, para que suba rápido aunque la señal sea mala.
-const FOTO_ANCHO = 360;     // ~30 KB por foto: así caben unas 60 000 en el plan gratis de Cloudflare
+const FOTO_ANCHO = 360;     // ~30 KB por foto: así caben unas 30 000 en 1 GB (plan gratis de Supabase)
 const FOTO_ALTO = 480;
 
 function recortarFoto(fuente, ancho, alto, espejo = false) {

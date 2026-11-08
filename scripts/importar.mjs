@@ -1,26 +1,31 @@
-// Prepara la lista de afiliados y de filiales para subirla a la base de datos D1.
+// Revisa la lista de afiliados y de filiales y la sube a Supabase.
 //
-// Uso: node scripts/importar.mjs <afiliados.csv> <filiales.txt> <salida.sql>
+// Uso:
+//   node scripts/importar.mjs <afiliados.csv> <filiales.txt>                  → solo revisa, no sube nada
+//   node scripts/importar.mjs <afiliados.csv> <filiales.txt> --subir          → sube a la base de PRUEBA
+//   node scripts/importar.mjs <afiliados.csv> <filiales.txt> --subir --produccion → sube a la base REAL
 //
 // afiliados.csv: el Excel de ADEP guardado como CSV. Solo se necesita la columna "cedula"
 //   (con o sin guiones). Si tiene una columna "activo" (1 / sí = activo, 0 / no = inactivo),
 //   también se usa. Cualquier otra columna se ignora.
 // filiales.txt: una filial por línea.
 //
-// Las listas que suba REEMPLAZAN a las anteriores. Los carnets que ya crearon los afiliados
-// se conservan; si una cédula deja de estar en la lista (o queda inactiva), su carnet deja de mostrarse.
+// Las listas que suba REEMPLAZAN a las anteriores, en un solo paso (si algo falla no cambia nada).
+// Los carnets que ya crearon los afiliados se conservan; si una cédula deja de estar en la lista
+// (o queda inactiva), su carnet deja de mostrarse.
 
-import { readFileSync, writeFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
+import { argumentos, conexion, confirmar, produccion } from "./entorno.mjs";
 
-const [archivoAfiliados, archivoFiliales, salida] = process.argv.slice(2);
-if (!archivoAfiliados || !archivoFiliales || !salida) {
-  console.error("Uso: node scripts/importar.mjs <afiliados.csv> <filiales.txt> <salida.sql>");
+const [archivoAfiliados, archivoFiliales] = argumentos;
+const subir = process.argv.includes("--subir");
+if (!archivoAfiliados || !archivoFiliales) {
+  console.error("Uso: node scripts/importar.mjs <afiliados.csv> <filiales.txt> [--subir] [--produccion]");
   process.exit(1);
 }
 
 const leer = archivo => readFileSync(archivo, "utf8").replace(/^﻿/, "");
 const sinTildes = s => s.normalize("NFD").replace(/[̀-ͯ]/g, "").trim().toLowerCase();
-const sql = s => "'" + s.replace(/'/g, "''") + "'";
 
 function leerCsv(contenido) {
   // Excel en español suele separar con ";" en vez de ",".
@@ -99,14 +104,22 @@ if (errores.length) {
   process.exit(1);
 }
 
-const lineas = [
-  "DELETE FROM afiliados;",
-  ...[...afiliados].map(([cedula, activo]) => `INSERT INTO afiliados (cedula, activo) VALUES (${sql(cedula)}, ${activo});`),
-  "DELETE FROM filiales;",
-  ...filiales.map(f => `INSERT INTO filiales (nombre) VALUES (${sql(f)});`),
-  ""
-];
-writeFileSync(salida, lineas.join("\n"));
-
 const activos = [...afiliados.values()].filter(Boolean).length;
-console.log(`Listo: ${afiliados.size} cédula(s) (${activos} activas) y ${filiales.length} filial(es) guardadas en ${salida}`);
+console.log(`Revisión correcta: ${afiliados.size} cédula(s) (${activos} activas) y ${filiales.length} filial(es).`);
+
+if (!subir) {
+  console.log("No se subió nada. Para subir la lista use: npm run db:subir (base real) o npm run db:subir-prueba.");
+  process.exit(0);
+}
+
+const { db } = conexion();
+if (produccion && !(await confirmar(
+  `Se va a REEMPLAZAR la lista de afiliados y filiales de la base REAL por la del archivo.`, "SUBIR"))) {
+  console.log("Cancelado. No se cambió nada.");
+  process.exit(0);
+}
+const resultado = await db.funcion("carnet_reemplazar_listas", {
+  afiliados: [...afiliados].map(([cedula, activo]) => ({ cedula, activo: Boolean(activo) })),
+  filiales
+});
+console.log(`Listo: la base de datos ahora tiene ${resultado.afiliados} afiliado(s) (${resultado.activos} activos) y ${resultado.filiales} filial(es).`);

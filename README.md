@@ -21,17 +21,28 @@ Página web donde los afiliados de ADEP crean y ven su carnet digital.
 - El carnet (formato vertical) se puede descargar como imagen o imprimir.
 - Si la cédula no está en la lista, se le ofrece escribir por WhatsApp para afiliarse.
 
-Funciona en **Cloudflare Pages + D1**: gratis, **sin tarjeta**, siempre encendido y no se apaga por inactividad.
+Funciona en **Vercel + Supabase**, los dos en su plan **gratis**:
 
 ```
-Celular del afiliado ──► Cloudflare Pages (página + funciones /api y /v)
-                              ├─ D1 "carnet-adep"           → afiliados, filiales, carnets, intentos
-                              └─ D1 "carnet-adep-fotos-1…4" → fotos (repartidas en 4 bases)
+Celular del afiliado ──► Vercel (página + funciones /api y /v) ──► Supabase de ADEP
+                                                                   ├─ Base de datos: tablas carnet_*
+                                                                   └─ Storage: bucket privado carnet-fotos
 ```
 
-Las fotos se guardan en 4 bases D1 porque en el plan gratis cada base admite 500 MB: en total caben
-**unas 60 000 fotos** de ~30 KB. A cada cédula le toca siempre la misma base (cédula % 4 + 1).
+El celular **nunca** se conecta a Supabase: solo las funciones de Vercel lo hacen, con una clave secreta
+guardada en Vercel (no en el código ni en GitHub).
+
 **Para entregar el proyecto a TI**, vea [`GUIA-TI.md`](GUIA-TI.md).
+
+### Lo que hay que saber del plan gratis
+
+- **Supabase pausa el proyecto si pasa 7 días sin uso.** Para que eso no pase, Vercel hace sola una
+  consulta pequeña a Supabase **una vez al día** (`api/despertar.js`, programada en `vercel.json`).
+- **Espacio:** 1 GB para fotos (unas **30 000 fotos** de ~30 KB) y 500 MB de base de datos, **compartidos
+  con lo que ADEP ya tenga** en ese proyecto. Revíselo en Supabase → *Project Settings → Usage*.
+- **No hay respaldos automáticos** en el plan gratis de Supabase: haga `npm run respaldo` **una vez al mes**.
+- **Vercel gratis (Hobby)** es para uso no comercial. Un carnet de afiliados de una asociación sin fines de
+  lucro normalmente entra; si ADEP quiere evitar dudas, existe el plan Pro.
 
 ## Cómo está hecho
 
@@ -46,61 +57,80 @@ public/                   → la página que ve el afiliado
   manifest.webmanifest    → nombre, colores e íconos de la app instalable
   iconos/                 → íconos de la app (hechos a partir de logo.png)
   vendor/                 → librerías: html2canvas (descargar imagen) y qrcode (código QR)
-  _headers                → que sw.js y el manifiesto no se queden viejos en los celulares
-functions/v/[codigo].js   → página que se abre al escanear el QR (/v/<código>)
-functions/api/            → lo que corre en el servidor
+api/                      → lo que corre en el servidor (funciones de Vercel)
   crear.js                → crea el carnet (si la cédula está en la lista)
   ingresar.js             → muestra el carnet con cédula + fecha de nacimiento
   foto.js                 → agrega o cambia la foto de un carnet
   carnet.js               → "recordar en este celular"
   filiales.js             → lista de filiales
+  verificar.js            → página que se abre al escanear el QR (/v/<código>)
+  despertar.js            → consulta diaria para que Supabase no se pause
 lib/comun.js              → funciones compartidas
-schema.sql                → tablas de la base de datos principal (carnet-adep)
-schema-fotos.sql          → tabla de fotos (igual en las 4 bases de fotos)
-scripts/configurar.mjs    → crea las 5 bases en Cloudflare la primera vez (npm run configurar)
-scripts/tablas.mjs        → crea las tablas en las 5 bases
-scripts/respaldo.mjs      → descarga una copia de las 5 bases (npm run respaldo)
-scripts/importar.mjs      → prepara la lista de cédulas y filiales para subirla
+lib/supabase.js           → conexión a Supabase (base de datos y fotos)
+basedatos/supabase.sql    → crea las tablas, la seguridad y el bucket de fotos en Supabase
+scripts/servidor.mjs      → servidor para probar en su computadora (npm run dev)
+scripts/importar.mjs      → revisa la lista de cédulas y filiales y la sube a Supabase
 scripts/borrar-foto.mjs   → borra la foto de un afiliado (fotos inadecuadas)
+scripts/respaldo.mjs      → descarga una copia de los datos y las fotos (npm run respaldo)
+scripts/restaurar.mjs     → vuelve a cargar un respaldo (npm run restaurar)
+scripts/ejemplo.mjs       → llena la base de PRUEBA con datos de ejemplo
 datos/                    → ejemplos de cómo deben venir las listas
-wrangler.toml             → configuración de Cloudflare
+.env.local.ejemplo        → modelo de la conexión a la base de PRUEBA
+.env.produccion.ejemplo   → modelo de la conexión a la base REAL
+vercel.json               → configuración de Vercel (carpeta public, /v/<código>, consulta diaria)
 ```
 
-La base de datos tiene:
+La base de datos (Supabase) tiene:
 
-| Tabla       | Qué guarda                                           | Quién la llena             |
-|-------------|------------------------------------------------------|----------------------------|
-| `afiliados` | Cédulas de los afiliados y si están activos          | ADEP (con el Excel)        |
-| `filiales`  | Lista de filiales                                    | ADEP                       |
-| `carnets`   | Nombre, filial, fecha de nacimiento y fecha de la foto/autorización | El afiliado, al crearlo |
-| `intentos`  | Intentos fallidos, para frenar a quien intente adivinar | Automático              |
+| Tabla              | Qué guarda                                           | Quién la llena             |
+|--------------------|------------------------------------------------------|----------------------------|
+| `carnet_afiliados` | Cédulas de los afiliados y si están activos          | ADEP (Excel o Table Editor) |
+| `carnet_filiales`  | Lista de filiales                                    | ADEP                       |
+| `carnet_carnets`   | Nombre, filial, fecha de nacimiento, códigos y fecha de la foto/autorización | El afiliado, al crearlo |
+| `carnet_intentos`  | Intentos fallidos, para frenar a quien intente adivinar | Automático              |
+
+Todas empiezan con `carnet_` para poder estar en el mismo proyecto de Supabase que las demás tablas de ADEP
+sin mezclarse. Tienen la seguridad por filas (RLS) activada **sin políticas**: con la clave pública de
+Supabase no se puede leer nada; solo el servidor, con la clave secreta.
 
 Cada carnet tiene un **código de verificación** público (12 letras y números al azar) que va en el QR
 del botón "Mostrar código QR".
-Es distinto de la clave secreta que usa "Recordar en este celular", así que escanear el QR no permite
-entrar al carnet de nadie.
+Es distinto de la clave secreta que usa "Recordar en este celular" (`token`), así que escanear el QR no
+permite entrar al carnet de nadie.
 
-Las fotos están en la tabla `fotos` de su base (360 × 480 px, unos 30 KB cada una). El celular
-recorta y comprime la foto antes de enviarla, así sube rápido aunque la señal sea mala.
+Las fotos están en Supabase Storage, bucket **privado** `carnet-fotos`, como `fotos/<cédula>.jpg`
+(360 × 480 px, unos 30 KB cada una). El celular recorta y comprime la foto antes de enviarla, así sube
+rápido aunque la señal sea mala.
 
 Tras 10 intentos fallidos en 15 minutos desde la misma conexión, se bloquean los intentos por un rato.
 
 ---
 
-## 1. Lo que necesita instalar (una sola vez)
+## 1. Preparar Supabase (una sola vez)
 
-1. **Node.js** (versión LTS): https://nodejs.org
-2. En una terminal, dentro de la carpeta del proyecto:
-   ```
-   npm install
-   ```
+Se recomiendan **dos** proyectos de Supabase: uno **de prueba** (para `npm run dev`) y el **real** de ADEP.
+En el real, las tablas `carnet_*` conviven con las que ADEP ya tiene sin tocarlas.
+
+En cada proyecto:
+
+1. Abra **SQL Editor**, pegue todo el archivo `basedatos/supabase.sql` y toque **Run**.
+   Crea las tablas, la seguridad y el bucket privado de fotos. Se puede volver a correr sin perder datos.
+2. En **Project Settings → API Keys** copie:
+   - la **URL** del proyecto (`https://xxxx.supabase.co`)
+   - una clave **secret** (`sb_secret_...`). También sirve la antigua `service_role`.
+
+   **Nunca** use ni comparta esta clave fuera del servidor: da acceso total.
 
 ## 2. Probarlo en su computadora
 
-```
-npm run db:reiniciar-local   # crea la base de datos de prueba (borra la anterior)
-npm run dev                  # abre la página en http://localhost:8788
-```
+1. Instale **Node.js** (versión LTS): https://nodejs.org. No hace falta `npm install`: el proyecto no
+   usa paquetes externos.
+2. Copie `.env.local.ejemplo` como **`.env.local`** y ponga la URL y la clave del proyecto de **prueba**.
+3. En una terminal, dentro de la carpeta del proyecto:
+   ```
+   npm run db:ejemplo   # llena la base de PRUEBA con datos de ejemplo (borra los carnets de prueba)
+   npm run dev          # abre la página en http://localhost:3000
+   ```
 
 Datos de prueba:
 
@@ -112,54 +142,55 @@ Datos de prueba:
 | 3-0321-0654 | —                   | Inactiva: "No encontramos su afiliación"        |
 | Cualquier otra | —                | "No encontramos su afiliación"                  |
 
-Para empezar de cero otra vez, repita `npm run db:reiniciar-local`.
+Para empezar de cero otra vez, repita `npm run db:ejemplo`.
 
-La cámara funciona en `http://localhost:8788` y en la página publicada (https). Si abre la prueba
+La cámara funciona en `http://localhost:3000` y en la página publicada (https). Si abre la prueba
 desde otro aparato con la IP de su computadora (`http://192.168...`), el navegador no permite usar
 la cámara: use "Elegir de mis fotos".
 
-## 3. Publicarlo en Cloudflare (una sola vez)
+## 3. Publicarlo en Vercel (una sola vez)
 
-1. Cree una cuenta en https://dash.cloudflare.com (idealmente a nombre de ADEP, no personal).
-2. Inicie sesión desde la terminal:
-   ```
-   npx wrangler login
-   ```
-3. Cree las 5 bases de datos y sus tablas (no pide tarjeta):
-   ```
-   npm run configurar
-   ```
-   Esto anota los IDs de las bases en `wrangler.toml`. **Guarde ese cambio en GitHub** (commit y push),
-   porque `npm run publicar` los necesita.
-4. Cargue la lista de afiliados y filiales (vea la sección 4).
-5. Publique la página:
-   ```
-   npm run publicar
-   ```
-   La primera vez le pregunta el nombre del proyecto: deje `carnet-adep`.
-   Al terminar le da la dirección, por ejemplo **https://carnet-adep.pages.dev**.
+1. En https://vercel.com → **Add New → Project**, elija este repositorio de GitHub.
+2. En **Framework Preset** deje **Other**. No cambie nada más: `vercel.json` ya dice que la página está
+   en `public/`.
+3. En **Environment Variables** agregue las dos del proyecto **real** de Supabase:
+   - `SUPABASE_URL`
+   - `SUPABASE_SECRET_KEY`
+   - (opcional) `CRON_SECRET`: cualquier texto largo al azar. Así solo Vercel puede llamar a la consulta diaria.
+4. Toque **Deploy**. Le da la dirección, por ejemplo **https://carnet-adep.vercel.app**.
 
-Para publicar cambios en el diseño o el código, solo repita `npm run publicar`.
+Desde ese momento, **cada vez que se suben cambios a GitHub** (rama principal), Vercel publica la versión
+nueva sola. Si cambia una variable, vuelva a publicar desde *Deployments → Redeploy*.
+
+Para comprobar que la consulta diaria quedó programada: Vercel → el proyecto → **Settings → Cron Jobs**.
 
 ## 4. Cargar o actualizar la lista de afiliados y filiales
 
-1. **Afiliados:** del Excel de ADEP solo se necesita la columna **cedula** (con o sin guiones).
+1. Copie `.env.produccion.ejemplo` como **`.env.produccion`** y ponga la URL y la clave del proyecto **real**.
+   Guárdelo solo en la computadora de quien administra.
+2. **Afiliados:** del Excel de ADEP solo se necesita la columna **cedula** (con o sin guiones).
    Si tiene una columna **activo** (`1`/`sí` = activo, `0`/`no` = inactivo), también se usa.
    Las demás columnas se ignoran. Guárdelo como **CSV** en `datos/afiliados.csv`.
    Vea el ejemplo en `datos/ejemplo-afiliados.csv`.
-2. **Filiales:** cree `datos/filiales.txt` con una filial por línea.
+3. **Filiales:** cree `datos/filiales.txt` con una filial por línea.
    Vea el ejemplo en `datos/ejemplo-filiales.txt` (son de ejemplo: use las reales de ADEP).
-3. Ejecute:
+4. Ejecute:
    ```
-   npm run importar     # revisa los archivos y avisa si hay errores
-   npm run db:subir     # los sube a Cloudflare
+   npm run importar     # revisa los archivos y avisa si hay errores (no sube nada)
+   npm run db:subir     # los sube a la base REAL (pide escribir SUBIR para confirmar)
    ```
+   Para probar con la base de prueba: `npm run db:subir-prueba`.
 
-**Las listas que suba reemplazan a las anteriores.** Los carnets que ya crearon los afiliados se conservan:
-si una cédula sale de la lista o queda inactiva, su carnet deja de mostrarse, y si vuelve, reaparece.
+**Las listas que suba reemplazan a las anteriores**, en un solo paso (si algo falla, no cambia nada).
+Los carnets que ya crearon los afiliados se conservan: si una cédula sale de la lista o queda inactiva,
+su carnet deja de mostrarse, y si vuelve, reaparece.
 
-> ⚠️ `datos/afiliados.csv` y `datos/importar.sql` tienen datos de afiliados. Están excluidos de Git
-> (`.gitignore`) para que **nunca** se suban a GitHub. No los comparta.
+Para agregar **un solo** afiliado sin subir el Excel: Supabase → **Table Editor → carnet_afiliados →
+Insert row** (cédula de 9 dígitos sin guiones, `activo` = true). Recuerde agregarlo también al Excel,
+o desaparecerá en la siguiente carga.
+
+> ⚠️ `datos/afiliados.csv`, `.env.local`, `.env.produccion` y la carpeta `respaldos/` tienen datos de
+> afiliados o claves. Están excluidos de Git (`.gitignore`) para que **nunca** se suban a GitHub.
 
 ## 5. Tareas comunes
 
@@ -169,35 +200,24 @@ pedirá tomarse una nueva. Si tiene su número, avísele por WhatsApp.
 npm run borrar-foto -- 1-0234-0567
 ```
 
-**Un afiliado dice que otra persona creó su carnet, o se equivocó en sus datos:** borre su foto y su
-carnet para que lo cree de nuevo (cambie la cédula; en el segundo comando va sin guiones):
-```
-npm run borrar-foto -- 1-0234-0567
-npx wrangler d1 execute carnet-adep --remote --command "DELETE FROM carnets WHERE cedula = '102340567'"
-```
+**Un afiliado dice que otra persona creó su carnet, o se equivocó en sus datos:** borre su foto y luego
+su carnet para que lo cree de nuevo: Supabase → **Table Editor → carnet_carnets**, busque la cédula y
+borre la fila.
 
-**Corregir el nombre o la filial** (sin borrar el carnet):
-```
-npx wrangler d1 execute carnet-adep --remote --command "UPDATE carnets SET nombre = 'Nombre Correcto' WHERE cedula = '102340567'"
-```
-También se puede desde el panel: https://dash.cloudflare.com → **Storage & Databases → D1 → carnet-adep → Console**.
+**Corregir el nombre o la filial** (sin borrar el carnet): en el mismo **Table Editor → carnet_carnets**,
+haga doble clic en el dato y cámbielo.
 
-**Ver cuántos carnets se han creado:**
-```
-npx wrangler d1 execute carnet-adep --remote --command "SELECT COUNT(*) AS carnets FROM carnets"
-```
+**Ver cuántos carnets se han creado:** **Table Editor → carnet_carnets** (el total aparece abajo), o en
+**SQL Editor**: `select count(*) from carnet_carnets;`
 
-**Respaldo** (copia de datos y fotos en la carpeta `respaldos/`, que nunca se sube a GitHub):
+**Respaldo** (copia de datos y fotos en la carpeta `respaldos/`, que nunca se sube a GitHub).
+El plan gratis de Supabase no guarda copias automáticas: **hágalo una vez al mes**.
 ```
 npm run respaldo
 ```
-Cloudflare además guarda automáticamente el historial de cada base de los últimos días (**Time Travel**),
-para volver atrás si algo se borra por error: `npx wrangler d1 time-travel info carnet-adep`.
+Para volver a cargar un respaldo: `npm run restaurar -- respaldos/<fecha>`.
 
-**Espacio usado** (cada base gratis admite 500 MB):
-```
-npx wrangler d1 info carnet-adep-fotos-1
-```
+**Espacio usado:** Supabase → **Project Settings → Usage** (Storage: máximo 1 GB; base de datos: 500 MB).
 
 ## 6. Antes de publicar
 

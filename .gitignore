@@ -1,10 +1,14 @@
 node_modules/
-.wrangler/
+.vercel/
+
+# Claves de Supabase: NUNCA subirlas a GitHub
+.env
+.env.local
+.env.produccion
+.env*.local
 
 # Datos reales de afiliados: NUNCA subirlos a GitHub
 datos/afiliados.csv
-datos/importar.sql
-datos/ejemplo.sql
 
-# Respaldos de las bases de datos (tienen datos personales)
+# Respaldos (tienen datos personales y fotos)
 respaldos/
