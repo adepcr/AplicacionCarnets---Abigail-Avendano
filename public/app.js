@@ -76,8 +76,11 @@ const copiaLocal = {
 };
 
 // --- Cédula ---
-const soloDigitos = v => v.replace(/\D/g, "").slice(0, 9);
-const formatoCedula = d => [d.slice(0, 1), d.slice(1, 5), d.slice(5, 9)].filter(Boolean).join("-");
+// Cédula nacional: 9 dígitos, se muestra 1-0234-0567. DIMEX (personas extranjeras): 11 o 12 dígitos, sin guiones.
+const soloDigitos = v => v.replace(/\D/g, "").slice(0, 12);
+const formatoCedula = d => d.length > 9 ? d : [d.slice(0, 1), d.slice(1, 5), d.slice(5, 9)].filter(Boolean).join("-");
+const cedulaValida = d => d.length === 9 || d.length === 11 || d.length === 12;
+const MENSAJE_CEDULA = "Escriba su cédula completa (9 dígitos) o su DIMEX (11 o 12 dígitos).";
 
 document.querySelectorAll("input.cedula").forEach(input => input.addEventListener("input", () => {
   input.value = formatoCedula(soloDigitos(input.value));
@@ -493,7 +496,7 @@ $("form-ingresar").addEventListener("submit", async e => {
   const cedula = soloDigitos($("ingresar-cedula").value);
   const nacimiento = fechaIngresar.valor();
 
-  if (cedula.length !== 9) return mostrarError(form, "Escriba su cédula completa (9 dígitos).");
+  if (!cedulaValida(cedula)) return mostrarError(form, MENSAJE_CEDULA);
   if (!nacimiento) return mostrarError(form, "Elija el día, el mes y el año de su nacimiento.");
 
   const r = await enviar(form, "/api/ingresar", { cedula, nacimiento });
@@ -517,7 +520,7 @@ $("form-crear").addEventListener("submit", async e => {
   const nacimiento = fechaCrear.valor();
   const foto = fotoCrear.valor();
 
-  if (cedula.length !== 9) return mostrarError(form, "Escriba su cédula completa (9 dígitos).");
+  if (!cedulaValida(cedula)) return mostrarError(form, MENSAJE_CEDULA);
   if (nombre.length < 5 || !nombre.includes(" ")) return mostrarError(form, "Escriba su nombre completo (nombre y apellidos).");
   if (!filial) return mostrarError(form, "Elija su filial.");
   if (!nacimiento) return mostrarError(form, "Elija el día, el mes y el año de su nacimiento.");

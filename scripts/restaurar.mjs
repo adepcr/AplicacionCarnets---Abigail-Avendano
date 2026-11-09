@@ -26,7 +26,7 @@ for (const tabla of TABLAS) {
   console.log(`${tabla}: ${filas.length} fila(s)`);
 }
 
-const archivos = existsSync(`${carpeta}/fotos`) ? readdirSync(`${carpeta}/fotos`).filter(f => /^\d{9}\.jpg$/.test(f)) : [];
+const archivos = existsSync(`${carpeta}/fotos`) ? readdirSync(`${carpeta}/fotos`).filter(f => /^(\d{9}|\d{11,12})\.jpg$/.test(f)) : [];
 for (const archivo of archivos) await db.subirFoto(`fotos/${archivo}`, readFileSync(`${carpeta}/fotos/${archivo}`));
 console.log(`fotos: ${archivos.length}`);
 console.log("\nListo: respaldo restaurado.");

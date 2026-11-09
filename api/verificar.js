@@ -6,7 +6,7 @@
 import { codigoValido, leerFotoGuardada, buscarCarnet } from "../lib/comun.js";
 
 const escapar = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-const cedulaParcial = c => `•-••••-${c.slice(5)}`;
+const cedulaParcial = c => c.length === 9 ? `•-••••-${c.slice(5)}` : `${"•".repeat(c.length - 4)}${c.slice(-4)}`;
 
 export async function GET(request) {
   const env = process.env;

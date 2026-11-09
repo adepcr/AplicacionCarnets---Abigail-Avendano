@@ -64,7 +64,7 @@ Hay dos caminos; los dos sirven porque en Vercel no hay datos:
 
 | Tabla | Campos | Quién la llena |
 |---|---|---|
-| `carnet_afiliados` | `cedula` (9 dígitos, sin guiones), `activo` (true/false), `actualizado` | ADEP |
+| `carnet_afiliados` | `cedula` (9 dígitos, o 11-12 si es DIMEX, sin guiones), `activo` (true/false), `actualizado` | ADEP |
 | `carnet_filiales` | `nombre` | ADEP |
 | `carnet_carnets` | `cedula`, `nombre`, `filial`, `nacimiento`, `token`, `verificacion`, `creado`, `foto`, `consentimiento` | El afiliado |
 | `carnet_intentos` | `ip`, `fecha` — intentos fallidos; se borran solos a los 15 min | Automático |

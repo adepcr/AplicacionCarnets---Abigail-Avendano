@@ -3,7 +3,7 @@
 
 import {
   json, leerCuerpo, leerCedula, leerFecha, estaBloqueado, registrarFallo,
-  esAfiliadoActivo, datosCarnet, MENSAJE_BLOQUEO
+  esAfiliadoActivo, datosCarnet, MENSAJE_BLOQUEO, MENSAJE_CEDULA
 } from "../lib/comun.js";
 import { supabase } from "../lib/supabase.js";
 
@@ -13,7 +13,7 @@ export async function POST(request) {
   const cedula = leerCedula(cuerpo.cedula);
   const nacimiento = leerFecha(cuerpo.nacimiento);
 
-  if (!cedula) return json({ error: "Ingrese una cédula de 9 dígitos." }, 400);
+  if (!cedula) return json({ error: MENSAJE_CEDULA }, 400);
   if (!nacimiento) return json({ error: "Elija su fecha de nacimiento completa." }, 400);
 
   if (await estaBloqueado(env, request)) return json({ error: MENSAJE_BLOQUEO }, 429);
