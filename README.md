@@ -11,8 +11,8 @@ Página web donde los afiliados de ADEP crean y ven su carnet digital.
 - **Carnets sin foto** (creados antes, o si ADEP borró la foto): la foto es **obligatoria**. Al entrar
   se le pide tomarse una, y el carnet no se muestra hasta que la suba (también lo valida el servidor).
 - **Ver mi carnet:** cédula + fecha de nacimiento.
-- **Cédula o DIMEX:** se acepta la cédula nacional (9 dígitos) y el DIMEX de personas extranjeras residentes
-  (11 o 12 dígitos). Cualquier otro largo se rechaza.
+- **Cédula o DIMEX:** se acepta la cédula nacional (9 dígitos) y la identificación de personas extranjeras
+  residentes: número de residencia antiguo (10 dígitos) o DIMEX (11 o 12). Cualquier otro largo se rechaza.
 - **Recordar en este celular:** después de entrar una vez, el carnet aparece directo al abrir la página.
 - **Código QR de verificación:** el botón **"Mostrar código QR"** abre el código en grande (no va impreso
   en el carnet). Quien lo escanee (un comercio, ADEP) ve en ese momento si el carnet está **vigente**, con la foto y el nombre para compararlos con la persona. La cédula
@@ -142,6 +142,7 @@ Datos de prueba:
 | 2-0456-0789 | (la que usted elija) | Afiliado sin carnet: puede crearlo             |
 | 4-0111-0222 | (la que usted elija) | Afiliado sin carnet: puede crearlo             |
 | 155800000012 | (la que usted elija) | DIMEX (persona extranjera) sin carnet: puede crearlo |
+| 9000000001 | (la que usted elija) | Residencia antigua (10 dígitos) sin carnet: puede crearlo |
 | 3-0321-0654 | —                   | Inactiva: "No encontramos su afiliación"        |
 | Cualquier otra | —                | "No encontramos su afiliación"                  |
 

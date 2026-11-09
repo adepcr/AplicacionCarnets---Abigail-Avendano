@@ -30,12 +30,13 @@ const lineas = readFileSync(entrada, "utf8").replace(/^﻿/, "").split(/\r?\n/);
 
 // Encabezado de filial: "101 - SAN JOSE" (código de 3 dígitos, guion y nombre, nada más en la línea)
 const ENCABEZADO = /^\s*(\d{3})\s*-\s*([A-ZÁÉÍÓÚÑÜ][A-ZÁÉÍÓÚÑÜ0-9 .,'()\/-]*?)\s*$/i;
-// Fila de un afiliado: empieza con la cédula (9 dígitos) o el DIMEX (11 o 12), sola o seguida de más datos
-const FILA = /^\s*(\d{9}|\d{11,12})(\s|$)/;
+// Fila de un afiliado: empieza con la cédula (9 dígitos) o una identificación de residente (10 a 12),
+// sola o seguida de más datos
+const FILA = /^\s*(\d{9,12})(\s|$)/;
 // A veces, al copiar, la cédula queda en medio de la línea: se reconoce porque sigue el teléfono
-const FILA_MEDIO = /(?:^|\s)(\d{9}|\d{11,12})\s+\d{4}-\d{4}(\s|$)/;
+const FILA_MEDIO = /(?:^|\s)(\d{9,12})\s+\d{4}-\d{4}(\s|$)/;
 // Algo que empieza como una identificación pero no tiene un largo válido (probables errores de digitación)
-const OTRA_ID = /^\s*(\d{5,8}|\d{10}|\d{13})(\s|$)/;
+const OTRA_ID = /^\s*(\d{5,8}|\d{13,15})(\s|$)/;
 // Totales que trae el PDF: "Total de socios por filial: 38" y "Numero de Asociado en el reporte: 8703"
 // (el número puede quedar en la misma línea o en la siguiente al copiar)
 const TOTAL_FILIAL = /total de socios por filial:?\s*(\d+)?/i;
@@ -125,7 +126,7 @@ if (sinFilial) console.log(`  (antes del primer encabezado de filial): ${sinFili
 if (repetidas.length) console.log(`\nAviso: ${repetidas.length} cédula(s) aparecen más de una vez; se cuentan una sola vez. Líneas: ${repetidas.slice(0, 20).join(", ")}`);
 if (enMedio.length) console.log(`\nAviso: ${enMedio.length} cédula(s) estaban en medio de la línea y se incluyeron. Líneas: ${enMedio.slice(0, 20).join(", ")}`);
 if (otras.length) {
-  console.log(`\nAviso: ${otras.length} fila(s) tienen una identificación que no es cédula (9 dígitos) ni DIMEX (11 o 12),`);
+  console.log(`\nAviso: ${otras.length} fila(s) tienen una identificación con menos de 9 o más de 12 dígitos,`);
   console.log("probablemente mal digitada en el sistema de ADEP.");
   console.log(`No se incluyeron. Líneas de ${entrada}: ${otras.slice(0, 20).join(", ")}${otras.length > 20 ? "…" : ""}`);
 }

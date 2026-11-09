@@ -7,7 +7,7 @@
 import { argumentos, conexion } from "./entorno.mjs";
 
 const cedula = String(argumentos[0] ?? "").replace(/\D/g, "");
-if (!/^(\d{9}|\d{11,12})$/.test(cedula)) {
+if (!/^\d{9,12}$/.test(cedula)) {
   console.error("Escriba la cédula del afiliado. Ejemplo: npm run borrar-foto -- 1-0234-0567");
   process.exit(1);
 }
