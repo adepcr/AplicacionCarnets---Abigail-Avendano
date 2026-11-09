@@ -40,6 +40,10 @@ guardada en Vercel (no en el código ni en GitHub).
 
 - **Supabase pausa el proyecto si pasa 7 días sin uso.** Para que eso no pase, Vercel hace sola una
   consulta pequeña a Supabase **una vez al día** (`api/despertar.js`, programada en `vercel.json`).
+- **Borrado automático (política de privacidad, punto 7):** esa misma consulta diaria anota la fecha en que
+  un carnet deja de tener afiliado activo, la quita si la persona vuelve a la lista, y **a los 3 meses borra
+  el carnet y la foto**. Si de una vez desaparecen muchos afiliados (lista incompleta), no borra nada y deja
+  un aviso en Vercel → **Logs**. Detalle en `lib/limpieza.js`.
 - **Espacio:** 1 GB para fotos (unas **30 000 fotos** de ~30 KB) y 500 MB de base de datos, **compartidos
   con lo que ADEP ya tenga** en ese proyecto. Revíselo en Supabase → *Project Settings → Usage*.
 - **No hay respaldos automáticos** en el plan gratis de Supabase: haga `npm run respaldo` **una vez al mes**.
@@ -66,15 +70,18 @@ api/                      → lo que corre en el servidor (funciones de Vercel)
   carnet.js               → "recordar en este celular"
   filiales.js             → lista de filiales
   verificar.js            → página que se abre al escanear el QR (/v/<código>)
-  despertar.js            → consulta diaria para que Supabase no se pause
+  despertar.js            → consulta diaria: evita la pausa de Supabase y borra carnets sin afiliación (3 meses)
 lib/comun.js              → funciones compartidas
 lib/supabase.js           → conexión a Supabase (base de datos y fotos)
+lib/limpieza.js           → borrado de carnets de quienes llevan 3 meses sin ser afiliados
 basedatos/supabase.sql    → crea las tablas, la seguridad y el bucket de fotos en Supabase
 scripts/servidor.mjs      → servidor para probar en su computadora (npm run dev)
 scripts/importar.mjs      → revisa la lista de cédulas y filiales y la sube a Supabase
 scripts/borrar-foto.mjs   → borra la foto de un afiliado (fotos inadecuadas)
 scripts/respaldo.mjs      → descarga una copia de los datos y las fotos (npm run respaldo)
 scripts/restaurar.mjs     → vuelve a cargar un respaldo (npm run restaurar)
+scripts/limpiar.mjs       → muestra o fuerza la limpieza que la consulta diaria hace sola (npm run limpiar)
+scripts/reporte.mjs       → saca cédulas y filiales del reporte PDF de ADEP (npm run reporte)
 scripts/ejemplo.mjs       → llena la base de PRUEBA con datos de ejemplo
 datos/                    → ejemplos de cómo deben venir las listas
 .env.local.ejemplo        → modelo de la conexión a la base de PRUEBA
@@ -230,6 +237,10 @@ El plan gratis de Supabase no guarda copias automáticas: **hágalo una vez al m
 npm run respaldo
 ```
 Para volver a cargar un respaldo: `npm run restaurar -- respaldos/<fecha>`.
+
+**Limpieza de carnets de exafiliados:** la hace sola la consulta diaria. Para ver cómo va o forzarla
+después de subir una lista: `npm run limpiar` (muestra los números y pide escribir SI antes de cambiar algo).
+Lo que hizo cada día aparece en Vercel → **Logs** buscando `despertar`.
 
 **Espacio usado:** Supabase → **Project Settings → Usage** (Storage: máximo 1 GB; base de datos: 500 MB).
 
