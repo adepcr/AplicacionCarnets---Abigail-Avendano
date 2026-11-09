@@ -55,6 +55,7 @@ Hay dos caminos; los dos sirven porque en Vercel no hay datos:
 - [ ] Página probada desde un celular (crear carnet, foto, QR, instalar la app)
 - [ ] Política de privacidad completa (`public/privacidad.html`, lo marcado en amarillo, incluida la región de Supabase)
 - [ ] Primer respaldo hecho (`npm run respaldo`) y guardado en un lugar seguro
+- [ ] Persona encargada de la **rutina mensual** definida (sección 4)
 - [ ] Acceso de la persona desarrolladora retirado de Supabase, Vercel y GitHub (si corresponde)
 - [ ] Si se cambió la clave secreta de Supabase después de la entrega, actualizada en Vercel y en `.env.produccion`
 
@@ -79,7 +80,33 @@ Para consultar o editar a mano: Supabase → **Table Editor** (tipo hoja de cál
 
 ---
 
-## 4. Tareas de todos los días
+## 4. Tareas de cada mes y de todos los días
+
+### Rutina mensual (obligatoria)
+
+El sistema **solo sabe quién es afiliado activo por la lista que se sube**. Si no se sube una lista nueva,
+quien deja de ser afiliado sigue viendo su carnet como vigente y su carnet nunca se borra. Por eso, **una vez
+al mes**, la persona encargada hace esto (unos 15 minutos), en la carpeta del proyecto en su computadora:
+
+1. **Actualizar el proyecto:** `git pull`
+2. **Sacar el reporte** del sistema de socios: *Reporte de Asociados Activos por Filial* (PDF).
+3. **Copiar el texto del PDF:** abrirlo en Edge o Chrome, clic dentro del documento, **Ctrl+A** y **Ctrl+C**.
+   Luego `notepad datos\reporte.txt`, pegar con **Ctrl+V** y guardar.
+4. **Sacar la lista:** `npm run reporte`
+   - Debe decir *"Todas las filiales coinciden con su total del PDF"*. Si alguna no coincide, no siga: revise el texto copiado.
+   - Si avisa de identificaciones con menos de 9 o más de 12 dígitos, avise a quien maneja el sistema de socios para que las corrija.
+5. **Revisar los nombres de filiales** en `datos/filiales.txt` (por ejemplo `OSA(PALMAR NORTE-SUR` → `OSA (PALMAR NORTE-SUR)`) y guardar.
+6. **Revisar y subir:** `npm run importar` y luego `npm run db:subir` (pide escribir SUBIR).
+7. **Borrar** `datos\reporte.txt`: tiene todos los datos personales del reporte.
+8. **Respaldo:** `npm run respaldo` y guardar la carpeta `respaldos/<fecha>` en el lugar seguro de ADEP.
+9. **Al día siguiente**, abrir `https://carnet-adep.vercel.app/api/despertar`: debe decir `"ok":true` y la cantidad
+   de afiliados nueva. Si dice `"ok":false` con un aviso, la lista subida estaba incompleta: repita desde el paso 2.
+
+Con esto, la consulta diaria detecta sola quién salió de la lista (anota la fecha), quién volvió (la quita) y, a los
+3 meses sin aparecer, borra su carnet y su foto.
+
+**Encargado(a) de la rutina mensual:** ______________________
+
 
 ### Agregar UN afiliado nuevo
 Supabase → **Table Editor → carnet_afiliados → Insert row**: cédula sin guiones (`102340567`) y `activo` = true.
@@ -92,7 +119,7 @@ Para desactivar a alguien: `update carnet_afiliados set activo = false where ced
 
 > ⚠️ Cuando se sube el Excel completo (abajo), **la lista se reemplaza**. Si agregó a alguien a mano, asegúrese de que también esté en el Excel, o desaparecerá en la siguiente carga.
 
-### Cargar la lista completa desde el Excel
+### Cargar la lista completa desde un Excel (en vez del PDF)
 1. Guarde el Excel como CSV en `datos/afiliados.csv` (columna `cedula`; opcional `activo`).
 2. Las filiales en `datos/filiales.txt`, una por línea.
 3. `npm run importar` (revisa y avisa errores) y luego `npm run db:subir` (pide escribir SUBIR).
@@ -107,7 +134,9 @@ Los carnets ya creados se conservan. `datos/afiliados.csv` nunca se sube a GitHu
 | Borrar un carnet para que lo cree de nuevo | `npm run borrar-foto -- <cédula>` y luego borrar la fila en *Table Editor → carnet_carnets* |
 | Corregir nombre o filial | *Table Editor → carnet_carnets*, doble clic en el dato |
 | Publicar cambios del código | Subirlos a la rama principal en GitHub: Vercel publica solo |
-| Respaldo | `npm run respaldo` (una vez al mes) |
+| Respaldo | `npm run respaldo` (parte de la rutina mensual) |
+| Desactivar a alguien de inmediato (renuncia a mitad de mes) | `update carnet_afiliados set activo = false where cedula = '...';` en el SQL Editor. Desde ese momento el QR dice "Carnet no vigente" |
+| Ver el estado de la limpieza automática | `npm run limpiar` (solo muestra; pide SI antes de cambiar algo) |
 
 ---
 
