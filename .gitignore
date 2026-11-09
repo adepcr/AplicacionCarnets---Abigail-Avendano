@@ -9,6 +9,8 @@ node_modules/
 
 # Datos reales de afiliados: NUNCA subirlos a GitHub
 datos/afiliados.csv
+datos/reporte.txt
+datos/*.pdf
 
 # Respaldos (tienen datos personales y fotos)
 respaldos/

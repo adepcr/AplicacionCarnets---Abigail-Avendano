@@ -7,6 +7,7 @@
   "scripts": {
     "dev": "node scripts/servidor.mjs",
     "db:ejemplo": "node scripts/ejemplo.mjs",
+    "reporte": "node scripts/reporte.mjs",
     "importar": "node scripts/importar.mjs datos/afiliados.csv datos/filiales.txt",
     "db:subir-prueba": "node scripts/importar.mjs datos/afiliados.csv datos/filiales.txt --subir",
     "db:subir": "node scripts/importar.mjs datos/afiliados.csv datos/filiales.txt --subir --produccion",
