@@ -41,6 +41,9 @@ create table if not exists public.carnet_carnets (
   foto           timestamptz,                       -- cuándo subió su foto (null = sin foto)
   consentimiento timestamptz                        -- cuándo autorizó guardar su foto (Ley 8968)
 );
+-- Desde cuándo la cédula no aparece como afiliado activo (la anota "npm run limpiar").
+-- Pasados 3 meses, ese mismo comando borra el carnet y la foto (política de privacidad, punto 7).
+alter table public.carnet_carnets add column if not exists sin_afiliacion_desde date;
 comment on table public.carnet_carnets is
   'Carnets creados por los afiliados. La foto está en Storage, bucket carnet-fotos, como fotos/<cedula>.jpg.';
 comment on column public.carnet_carnets.token is 'Secreto. Nunca compartirlo: permite abrir el carnet.';

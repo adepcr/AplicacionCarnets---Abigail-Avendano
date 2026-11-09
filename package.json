@@ -13,6 +13,7 @@
     "db:subir": "node scripts/importar.mjs datos/afiliados.csv datos/filiales.txt --subir --produccion",
     "borrar-foto": "node scripts/borrar-foto.mjs --produccion",
     "respaldo": "node scripts/respaldo.mjs --produccion",
-    "restaurar": "node scripts/restaurar.mjs --produccion"
+    "restaurar": "node scripts/restaurar.mjs --produccion",
+    "limpiar": "node scripts/limpiar.mjs --produccion"
   }
 }

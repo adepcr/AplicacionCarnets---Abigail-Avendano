@@ -146,6 +146,7 @@ Los carnets ya creados se conservan. `datos/afiliados.csv` nunca se sube a GitHu
 - Si cree que la clave secreta se filtró: en Supabase → *Project Settings → API Keys* cree una nueva, borre la vieja y actualícela en Vercel y en `.env.produccion`.
 - Nunca suba a GitHub: `.env.local`, `.env.produccion`, `datos/afiliados.csv`, la carpeta `respaldos/` ni capturas con datos de afiliados (el `.gitignore` ya los excluye).
 - Las solicitudes de acceso, corrección o borrado de datos (política de privacidad, punto 8) se atienden con las tareas de la sección 4.
+- **Borrado automático:** la consulta diaria (`api/despertar.js`) borra el carnet y la foto de quien lleva **3 meses** sin aparecer como afiliado activo, como dice la política (punto 7). Si alguien vuelve a la lista antes, no se borra nada. Si de una vez desaparecen muchos afiliados (más de 50, o más del 20 % de los carnets), se detiene sin borrar y deja un aviso en Vercel → *Logs*: revise que la última lista subida esté completa. Para ver el estado: `npm run limpiar`.
 - La política de privacidad está en `public/privacidad.html`. Si cambia lo que se guarda o quién lo ve, hay que actualizarla.
 
 ---
@@ -158,5 +159,6 @@ Los carnets ya creados se conservan. `datos/afiliados.csv` nunca se sube a GitHu
 | Ningún carnet abre, error en todas las páginas | ¿Supabase está pausado? Panel de Supabase → *Restore project*. ¿Están bien `SUPABASE_URL` y `SUPABASE_SECRET_KEY` en Vercel? |
 | Error al guardar la foto | ¿El Storage llegó a 1 GB? *Project Settings → Usage* |
 | La página no carga | Vercel → el proyecto → *Deployments* (vuelva a la versión anterior con *Instant Rollback*). Errores en *Logs* |
+| Aviso "Limpieza diaria detenida" en Vercel → Logs | La última lista de afiliados subida probablemente está incompleta. Vuelva a generarla y subirla (`npm run reporte`, `importar`, `db:subir`) |
 | "Demasiados intentos" | Normal tras 10 intentos fallidos desde la misma conexión; se libera en 15 minutos |
 | Un celular sigue mostrando una versión vieja | Cerrar la app o el navegador y abrir de nuevo (se actualiza al haber internet) |
