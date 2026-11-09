@@ -76,11 +76,11 @@ const copiaLocal = {
 };
 
 // --- Cédula ---
-// Cédula nacional: 9 dígitos, se muestra 1-0234-0567. DIMEX (personas extranjeras): 11 o 12 dígitos, sin guiones.
+// Cédula nacional: 9 dígitos, se muestra 1-0234-0567. Residentes (residencia antigua o DIMEX): 10 a 12 dígitos, sin guiones.
 const soloDigitos = v => v.replace(/\D/g, "").slice(0, 12);
 const formatoCedula = d => d.length > 9 ? d : [d.slice(0, 1), d.slice(1, 5), d.slice(5, 9)].filter(Boolean).join("-");
-const cedulaValida = d => d.length === 9 || d.length === 11 || d.length === 12;
-const MENSAJE_CEDULA = "Escriba su cédula completa (9 dígitos) o su DIMEX (11 o 12 dígitos).";
+const cedulaValida = d => d.length >= 9 && d.length <= 12;
+const MENSAJE_CEDULA = "Escriba su cédula completa (9 dígitos) o su identificación de residente (10 a 12 dígitos).";
 
 document.querySelectorAll("input.cedula").forEach(input => input.addEventListener("input", () => {
   input.value = formatoCedula(soloDigitos(input.value));
