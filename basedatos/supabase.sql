@@ -70,6 +70,14 @@ revoke all on public.carnet_afiliados, public.carnet_filiales,
               public.carnet_carnets,   public.carnet_intentos
   from anon, authenticated;
 
+-- Solo el servidor (clave secreta = rol service_role) puede usar estas tablas.
+-- Los proyectos nuevos de Supabase ya no dan este permiso solos: sin esto, todo responde 403.
+grant usage on schema public to service_role;
+grant select, insert, update, delete
+  on public.carnet_afiliados, public.carnet_filiales,
+     public.carnet_carnets,   public.carnet_intentos
+  to service_role;
+
 
 -- ---------------------------------------------------------------------
 -- 3. Reemplazar la lista de afiliados y de filiales (desde el Excel)
