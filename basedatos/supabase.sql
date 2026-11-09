@@ -16,12 +16,12 @@
 -- Lista oficial de ADEP: quién puede crear su carnet.
 -- Para agregar un afiliado basta con agregar una fila (Table Editor).
 create table if not exists public.carnet_afiliados (
-  cedula      text primary key check (cedula ~ '^[0-9]{9}$'),   -- 9 dígitos, sin guiones
+  cedula      text primary key check (cedula ~ '^([0-9]{9}|[0-9]{11,12})$'),   -- cédula (9) o DIMEX (11-12), sin guiones
   activo      boolean not null default true,
   actualizado timestamptz not null default now()
 );
 comment on table public.carnet_afiliados is
-  'Afiliados de ADEP que pueden crear su carnet. Cédula de 9 dígitos sin guiones (ej. 102340567).';
+  'Afiliados de ADEP que pueden crear su carnet. Cédula de 9 dígitos o DIMEX de 11-12, sin guiones (ej. 102340567).';
 
 -- Filiales que el afiliado puede elegir al crear su carnet.
 create table if not exists public.carnet_filiales (
@@ -31,7 +31,7 @@ comment on table public.carnet_filiales is 'Filiales que aparecen en la lista de
 
 -- Carnets creados por los mismos afiliados.
 create table if not exists public.carnet_carnets (
-  cedula         text primary key check (cedula ~ '^[0-9]{9}$'),
+  cedula         text primary key check (cedula ~ '^([0-9]{9}|[0-9]{11,12})$'),
   nombre         text not null check (length(nombre) between 5 and 80),
   filial         text not null,
   nacimiento     date not null,                     -- clave para volver a ver el carnet
@@ -53,6 +53,14 @@ create table if not exists public.carnet_intentos (
   fecha timestamptz not null default now()
 );
 create index if not exists carnet_intentos_ip_fecha on public.carnet_intentos (ip, fecha);
+
+-- Aceptar también DIMEX (11 o 12 dígitos) en bases creadas cuando solo se aceptaban 9.
+alter table public.carnet_afiliados drop constraint if exists carnet_afiliados_cedula_check;
+alter table public.carnet_afiliados add  constraint carnet_afiliados_cedula_check
+  check (cedula ~ '^([0-9]{9}|[0-9]{11,12})$');
+alter table public.carnet_carnets drop constraint if exists carnet_carnets_cedula_check;
+alter table public.carnet_carnets add  constraint carnet_carnets_cedula_check
+  check (cedula ~ '^([0-9]{9}|[0-9]{11,12})$');
 
 
 -- ---------------------------------------------------------------------
