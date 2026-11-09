@@ -93,7 +93,7 @@ La base de datos (Supabase) tiene:
 
 | Tabla              | Qué guarda                                           | Quién la llena             |
 |--------------------|------------------------------------------------------|----------------------------|
-| `carnet_afiliados` | Cédulas de los afiliados y si están activos          | ADEP (Excel o Table Editor) |
+| `carnet_afiliados` | Cédula, si está activo, nombre y filial (lista compartida con ADEP Vota) | ADEP (reporte mensual, Excel o Table Editor) |
 | `carnet_filiales`  | Lista de filiales                                    | ADEP                       |
 | `carnet_carnets`   | Nombre, filial, fecha de nacimiento, códigos y fecha de la foto/autorización | El afiliado, al crearlo |
 | `carnet_intentos`  | Intentos fallidos, para frenar a quien intente adivinar | Automático              |
@@ -185,7 +185,7 @@ Para comprobar que la consulta diaria quedó programada: Vercel → el proyecto 
 2. **Afiliados y filiales desde el PDF "Reporte de Asociados Activos por Filial":**
    1. Abra el PDF en Edge o Chrome, haga clic dentro del documento y toque **Ctrl+A** y **Ctrl+C**.
    2. `notepad datos\reporte.txt`, pegue con **Ctrl+V** y guarde.
-   3. `npm run reporte`: crea `datos/afiliados.csv` (solo las cédulas) y `datos/filiales.txt`
+   3. `npm run reporte`: crea `datos/afiliados.csv` (cédula, nombre y filial) y `datos/filiales.txt`
       (de los encabezados `101 - SAN JOSE`), y muestra cuántas cédulas hay por filial para compararlas
       con el PDF. No copia nombres, teléfonos, direcciones ni fechas.
    4. Revise `datos/filiales.txt` (puede corregir tildes) y siga con el paso 5. Al terminar, borre

@@ -7,7 +7,8 @@
 //
 // afiliados.csv: el Excel de ADEP guardado como CSV. Solo se necesita la columna "cedula"
 //   (con o sin guiones). Si tiene una columna "activo" (1 / sí = activo, 0 / no = inactivo),
-//   también se usa. Cualquier otra columna se ignora.
+//   también se usa. Las columnas "nombre" y "filial" (si están) se guardan para el sistema de
+//   votaciones ADEP Vota, que comparte esta lista. Cualquier otra columna se ignora.
 // filiales.txt: una filial por línea.
 //
 // Las listas que suba REEMPLAZAN a las anteriores, en un solo paso (si algo falla no cambia nada).
@@ -73,6 +74,9 @@ const [titulos, ...filas] = leerCsv(leer(archivoAfiliados));
 const columnas = titulos.map(sinTildes);
 const colCedula = columnas.indexOf("cedula");
 const colActivo = columnas.indexOf("activo");
+const colNombre = columnas.indexOf("nombre");
+const colFilial = columnas.indexOf("filial");
+const texto = (f, col) => col === -1 ? "" : String(f[col] ?? "").replace(/\s+/g, " ").trim().slice(0, 80);
 
 if (colCedula === -1) {
   console.error(`Falta la columna "cedula". Títulos encontrados: ${titulos.join(", ")}`);
@@ -89,7 +93,7 @@ filas.forEach((f, i) => {
   if (!/^\d{9,12}$/.test(cedula)) return errores.push(`afiliados, línea ${linea}: cédula inválida "${original}" (debe tener de 9 a 12 dígitos)`);
   if (activo === null) return errores.push(`afiliados, línea ${linea}: valor de "activo" no reconocido "${f[colActivo]}"`);
   if (afiliados.has(cedula)) return errores.push(`afiliados, línea ${linea}: cédula repetida ${original}`);
-  afiliados.set(cedula, activo);
+  afiliados.set(cedula, { activo, nombre: texto(f, colNombre), filial: texto(f, colFilial) });
 });
 
 // --- Filiales ---
@@ -104,8 +108,9 @@ if (errores.length) {
   process.exit(1);
 }
 
-const activos = [...afiliados.values()].filter(Boolean).length;
-console.log(`Revisión correcta: ${afiliados.size} cédula(s) (${activos} activas) y ${filiales.length} filial(es).`);
+const activos = [...afiliados.values()].filter(a => a.activo).length;
+const conNombre = [...afiliados.values()].filter(a => a.nombre).length;
+console.log(`Revisión correcta: ${afiliados.size} cédula(s) (${activos} activas, ${conNombre} con nombre) y ${filiales.length} filial(es).`);
 
 if (!subir) {
   console.log("No se subió nada. Para subir la lista use: npm run db:subir (base real) o npm run db:subir-prueba.");
@@ -119,7 +124,7 @@ if (produccion && !(await confirmar(
   process.exit(0);
 }
 const resultado = await db.funcion("carnet_reemplazar_listas", {
-  afiliados: [...afiliados].map(([cedula, activo]) => ({ cedula, activo: Boolean(activo) })),
+  afiliados: [...afiliados].map(([cedula, a]) => ({ cedula, activo: Boolean(a.activo), nombre: a.nombre, filial: a.filial })),
   filiales
 });
 console.log(`Listo: la base de datos ahora tiene ${resultado.afiliados} afiliado(s) (${resultado.activos} activos) y ${resultado.filiales} filial(es).`);
