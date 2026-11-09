@@ -177,6 +177,9 @@ Para comprobar que la consulta diaria quedó programada: Vercel → el proyecto 
 
 ## 4. Cargar o actualizar la lista de afiliados y filiales
 
+> **Hay que hacerlo una vez al mes**: el sistema solo sabe quién es afiliado activo por la última lista
+> subida. Los pasos completos, con el respaldo, están en `GUIA-TI.md` → *Rutina mensual*.
+
 1. Copie `.env.produccion.ejemplo` como **`.env.produccion`** y ponga la URL y la clave del proyecto **real**.
    Guárdelo solo en la computadora de quien administra.
 2. **Afiliados y filiales desde el PDF "Reporte de Asociados Activos por Filial":**
