@@ -168,13 +168,23 @@ Para comprobar que la consulta diaria quedó programada: Vercel → el proyecto 
 
 1. Copie `.env.produccion.ejemplo` como **`.env.produccion`** y ponga la URL y la clave del proyecto **real**.
    Guárdelo solo en la computadora de quien administra.
-2. **Afiliados:** del Excel de ADEP solo se necesita la columna **cedula** (con o sin guiones).
+2. **Afiliados y filiales desde el PDF "Reporte de Asociados Activos por Filial":**
+   1. Abra el PDF en Edge o Chrome, haga clic dentro del documento y toque **Ctrl+A** y **Ctrl+C**.
+   2. `notepad datos\reporte.txt`, pegue con **Ctrl+V** y guarde.
+   3. `npm run reporte`: crea `datos/afiliados.csv` (solo las cédulas) y `datos/filiales.txt`
+      (de los encabezados `101 - SAN JOSE`), y muestra cuántas cédulas hay por filial para compararlas
+      con el PDF. No copia nombres, teléfonos, direcciones ni fechas.
+   4. Revise `datos/filiales.txt` (puede corregir tildes) y siga con el paso 5. Al terminar, borre
+      `datos/reporte.txt`: tiene datos personales (Git ya lo ignora).
+
+   Si en vez del PDF tiene un Excel, siga los puntos de abajo.
+3. **Afiliados:** del Excel de ADEP solo se necesita la columna **cedula** (con o sin guiones).
    Si tiene una columna **activo** (`1`/`sí` = activo, `0`/`no` = inactivo), también se usa.
    Las demás columnas se ignoran. Guárdelo como **CSV** en `datos/afiliados.csv`.
    Vea el ejemplo en `datos/ejemplo-afiliados.csv`.
-3. **Filiales:** cree `datos/filiales.txt` con una filial por línea.
+4. **Filiales:** cree `datos/filiales.txt` con una filial por línea.
    Vea el ejemplo en `datos/ejemplo-filiales.txt` (son de ejemplo: use las reales de ADEP).
-4. Ejecute:
+5. Ejecute:
    ```
    npm run importar     # revisa los archivos y avisa si hay errores (no sube nada)
    npm run db:subir     # los sube a la base REAL (pide escribir SUBIR para confirmar)
