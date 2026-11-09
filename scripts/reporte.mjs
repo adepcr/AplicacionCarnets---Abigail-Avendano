@@ -30,8 +30,8 @@ const lineas = readFileSync(entrada, "utf8").replace(/^﻿/, "").split(/\r?\n/);
 
 // Encabezado de filial: "101 - SAN JOSE" (código de 3 dígitos, guion y nombre, nada más en la línea)
 const ENCABEZADO = /^\s*(\d{3})\s*-\s*([A-ZÁÉÍÓÚÑÜ][A-ZÁÉÍÓÚÑÜ .'()-]*?)\s*$/i;
-// Fila de un afiliado: empieza con la cédula de 9 dígitos y sigue con más datos
-const FILA = /^\s*(\d{9})\s+\S/;
+// Fila de un afiliado: empieza con la cédula de 9 dígitos (sola o seguida de más datos)
+const FILA = /^\s*(\d{9})(\s|$)/;
 // Algo que empieza como una identificación pero no tiene 9 dígitos (DIMEX, errores de digitación)
 const OTRA_ID = /^\s*(\d{10,12})\s+\d{4}-\d{4}/;
 
