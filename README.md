@@ -2,6 +2,8 @@
 
 Página web donde los afiliados de ADEP crean y ven su carnet digital.
 
+**Página:** https://carnet-adep.vercel.app
+
 - **Crear mi carnet (primera vez):** el afiliado escribe su cédula, su nombre, elige su filial y su
   fecha de nacimiento (día, mes y año en tres listas), y **se toma una foto del rostro** con la cámara
   del celular (o la elige de sus fotos). Debe marcar la casilla de autorización para guardar su foto
@@ -49,12 +51,6 @@ guardada en Vercel (no en el código ni en GitHub).
 - **No hay respaldos automáticos** en el plan gratis de Supabase: haga `npm run respaldo` **una vez al mes**.
 - **Vercel gratis (Hobby)** es para uso no comercial. Un carnet de afiliados de una asociación sin fines de
   lucro normalmente entra; si ADEP quiere evitar dudas, existe el plan Pro.
-
-## Aplicaciones de ADEP
-
-- **Página Carnet digital:** https://carnet-adep.vercel.app
-- **Sistema de votación:** https://adep-vota.web.app
-- **Aplicación Archivo general:** https://inventario-archivo-docs.vercel.app/
 
 ## Cómo está hecho
 
