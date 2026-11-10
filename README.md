@@ -50,6 +50,12 @@ guardada en Vercel (no en el código ni en GitHub).
 - **Vercel gratis (Hobby)** es para uso no comercial. Un carnet de afiliados de una asociación sin fines de
   lucro normalmente entra; si ADEP quiere evitar dudas, existe el plan Pro.
 
+## Aplicaciones de ADEP
+
+- **Página Carnet digital:** https://carnet-adep.vercel.app
+- **Sistema de votación:** https://adep-vota.web.app
+- **Aplicación Archivo general:** https://inventario-archivo-docs.vercel.app/
+
 ## Cómo está hecho
 
 ```
