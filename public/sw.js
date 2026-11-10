@@ -7,7 +7,7 @@
 //   La copia del carnet para ver sin internet la guarda la página (app.js), solo si la persona
 //   eligió "Recordar en este celular".
 
-const VERSION = "carnet-adep-v1";
+const VERSION = "carnet-adep-v2";
 const ARCHIVOS = [
   "/",
   "/estilos.css",
