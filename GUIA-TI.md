@@ -100,7 +100,7 @@ al mes**, la persona encargada hace esto (unos 15 minutos), en la carpeta del pr
 5. **Revisar los nombres de filiales** en `datos/filiales.txt` (por ejemplo `OSA(PALMAR NORTE-SUR` → `OSA (PALMAR NORTE-SUR)`) y guardar.
 6. **Revisar y subir:** `npm run importar` y luego `npm run db:subir` (pide escribir SUBIR).
 7. **Borrar** `datos\reporte.txt`: tiene todos los datos personales del reporte.
-8. **Respaldo:** `npm run respaldo` y guardar la carpeta `respaldos/<fecha>` en el lugar seguro de ADEP.
+8. **Respaldo:** `npm run respaldo` y `npm run respaldo-completo`, y guardar las dos carpetas de `respaldos/` en el lugar seguro de ADEP.
 9. **Al día siguiente**, abrir `https://carnet-adep.vercel.app/api/despertar`: debe decir `"ok":true` y la cantidad
    de afiliados nueva. Si dice `"ok":false` con un aviso, la lista subida estaba incompleta: repita desde el paso 2.
 
@@ -136,7 +136,7 @@ Los carnets ya creados se conservan. `datos/afiliados.csv` nunca se sube a GitHu
 | Borrar un carnet para que lo cree de nuevo | `npm run borrar-foto -- <cédula>` y luego borrar la fila en *Table Editor → carnet_carnets* |
 | Corregir nombre o filial | *Table Editor → carnet_carnets*, doble clic en el dato |
 | Publicar cambios del código | Subirlos a la rama principal en GitHub: Vercel publica solo |
-| Respaldo | `npm run respaldo` (parte de la rutina mensual) |
+| Respaldo | `npm run respaldo` y `npm run respaldo-completo` (parte de la rutina mensual) |
 | Desactivar a alguien de inmediato (renuncia a mitad de mes) | `update carnet_afiliados set activo = false where cedula = '...';` en el SQL Editor. Desde ese momento el QR dice "Carnet no vigente" |
 | Ver el estado de la limpieza automática | `npm run limpiar` (solo muestra; pide SI antes de cambiar algo) |
 
@@ -151,6 +151,11 @@ Los carnets ya creados se conservan. `datos/afiliados.csv` nunca se sube a GitHu
   Esos archivos tienen **datos personales**: guárdelos cifrados o en una carpeta con acceso restringido.
 - **Restaurar:** `npm run restaurar -- respaldos/<fecha>` (pide escribir RESTAURAR).
   Vuelve a cargar las filas y las fotos del respaldo. Si el proyecto es nuevo, corra antes `basedatos/supabase.sql`.
+- **Respaldo completo del proyecto (recomendado, una vez al mes):** `npm run respaldo-completo`.
+  En el mismo proyecto de Supabase están el Inventario, el Carnet, ADEP Vota (tablas `vota_`) y el prototipo de
+  votaciones (tablas `votab_`). Este comando guarda **todo de una vez** en `respaldos/completo-<fecha>/`: todas las
+  tablas, las cuentas de usuario (sin contraseñas) y todos los archivos (fotos). Lea `RESUMEN.txt`: dice cuántas filas
+  y archivos se guardaron y si algo no se pudo leer. No reemplaza a `npm run respaldo`, que es el que usa `npm run restaurar`.
 - Para probar los comandos sin tocar la base real, agregue `-- --prueba` (usa `.env.local`).
 
 ---
