@@ -65,7 +65,7 @@ Hay dos caminos; los dos sirven porque en Vercel no hay datos:
 
 | Tabla | Campos | Quién la llena |
 |---|---|---|
-| `carnet_afiliados` | `cedula` (9 dígitos, o 10-12 si es residente/DIMEX, sin guiones), `activo` (true/false), `actualizado` | ADEP |
+| `carnet_afiliados` | `cedula` (9 dígitos, o 10-12 si es residente/DIMEX, sin guiones), `activo` (true/false), `nombre`, `filial`, `actualizado` | ADEP. **Lista compartida con ADEP Vota** (sistema de votaciones): el mismo reporte mensual actualiza los dos sistemas |
 | `carnet_filiales` | `nombre` | ADEP |
 | `carnet_carnets` | `cedula`, `nombre`, `filial`, `nacimiento`, `token`, `verificacion`, `creado`, `foto`, `consentimiento` | El afiliado |
 | `carnet_intentos` | `ip`, `fecha` — intentos fallidos; se borran solos a los 15 min | Automático |
@@ -75,6 +75,7 @@ Hay dos caminos; los dos sirven porque en Vercel no hay datos:
 - `foto` / `consentimiento`: fecha y hora en que subió la foto y aceptó la autorización (Ley 8968). `foto` vacío = sin foto: la página le exige una al entrar.
 - **Fotos:** Storage → bucket `carnet-fotos` → `fotos/<cédula>.jpg` (360 × 480 px, ~30 KB). El bucket es privado: las fotos no tienen enlace público.
 - **Seguridad:** RLS activado sin políticas y permisos quitados a `anon` y `authenticated`. Con la clave pública de Supabase no se puede leer nada de estas tablas. **No agregue políticas** a estas tablas.
+- **Lista compartida con ADEP Vota:** el sistema de votaciones (repositorio `adepcr/sistema-votaciones`, tablas `vota_*` en este mismo proyecto) usa `carnet_afiliados` para saber quién puede votar y con qué nombre y filial. Solo la lee y cambia por medio de sus funciones (`supabase/votaciones.sql` de ese repositorio), nunca con la clave pública. Quien sale de la lista mensual deja de tener carnet **y** de poder votar.
 
 Para consultar o editar a mano: Supabase → **Table Editor** (tipo hoja de cálculo) o **SQL Editor**.
 
@@ -93,6 +94,7 @@ al mes**, la persona encargada hace esto (unos 15 minutos), en la carpeta del pr
 3. **Copiar el texto del PDF:** abrirlo en Edge o Chrome, clic dentro del documento, **Ctrl+A** y **Ctrl+C**.
    Luego `notepad datos\reporte.txt`, pegar con **Ctrl+V** y guardar.
 4. **Sacar la lista:** `npm run reporte`
+   - También lee el **nombre** y la **filial** de cada persona (los usa ADEP Vota). Si dice que faltan nombres, no es grave: a esas personas se les conserva el nombre que ya tenían.
    - Debe decir *"Todas las filiales coinciden con su total del PDF"*. Si alguna no coincide, no siga: revise el texto copiado.
    - Si avisa de identificaciones con menos de 9 o más de 12 dígitos, avise a quien maneja el sistema de socios para que las corrija.
 5. **Revisar los nombres de filiales** en `datos/filiales.txt` (por ejemplo `OSA(PALMAR NORTE-SUR` → `OSA (PALMAR NORTE-SUR)`) y guardar.
@@ -170,6 +172,7 @@ Los carnets ya creados se conservan. `datos/afiliados.csv` nunca se sube a GitHu
 ## 7. Seguridad y protección de datos (Ley 8968)
 
 - El sistema guarda **cédula, nombre, filial, fecha de nacimiento y foto** de cada afiliado que crea su carnet.
+- La lista de afiliados (`carnet_afiliados`) guarda **cédula, nombre y filial** de todos los afiliados activos, según el reporte de ADEP. La comparten el carnet y ADEP Vota. Teléfonos, direcciones y fechas del reporte **no** se guardan.
 - Solo deben tener acceso al proyecto de Supabase y a Vercel las personas que administran el sistema. Revise los miembros periódicamente.
 - Active la **verificación en dos pasos** en Supabase, Vercel y GitHub.
 - Si cree que la clave secreta se filtró: en Supabase → *Project Settings → API Keys* cree una nueva, borre la vieja y actualícela en Vercel y en `.env.produccion`.
