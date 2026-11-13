@@ -65,6 +65,14 @@ alter table public.carnet_carnets drop constraint if exists carnet_carnets_cedul
 alter table public.carnet_carnets add  constraint carnet_carnets_cedula_check
   check (cedula ~ '^[0-9]{9,12}$');
 
+-- Nombre y filial de cada afiliado (salen del reporte mensual de ADEP).
+-- Los usa el sistema de votaciones (ADEP Vota), que comparte esta misma lista.
+-- El carnet no los muestra: el afiliado escribe su nombre y elige su filial al crearlo.
+alter table public.carnet_afiliados add column if not exists nombre text;
+alter table public.carnet_afiliados add column if not exists filial text;
+comment on column public.carnet_afiliados.nombre is 'Nombre según el reporte de ADEP (lo usa ADEP Vota).';
+comment on column public.carnet_afiliados.filial is 'Filial según el reporte de ADEP (lo usa ADEP Vota).';
+
 
 -- ---------------------------------------------------------------------
 -- 2. Seguridad
@@ -102,10 +110,18 @@ security definer
 set search_path = public
 as $$
 begin
+  -- Si el archivo no trae nombre o filial de alguien, se conserva el que ya tenía
+  create temp table if not exists carnet_anteriores (cedula text primary key, nombre text, filial text) on commit drop;
+  delete from carnet_anteriores;
+  insert into carnet_anteriores select cedula, nombre, filial from public.carnet_afiliados;
+
   delete from public.carnet_afiliados where true;
-  insert into public.carnet_afiliados (cedula, activo)
-    select a->>'cedula', (a->>'activo')::boolean
-    from jsonb_array_elements(afiliados) as a;
+  insert into public.carnet_afiliados (cedula, activo, nombre, filial)
+    select a->>'cedula', (a->>'activo')::boolean,
+           coalesce(nullif(trim(a->>'nombre'), ''), v.nombre),
+           coalesce(nullif(trim(a->>'filial'), ''), v.filial)
+    from jsonb_array_elements(afiliados) as a
+    left join carnet_anteriores v on v.cedula = a->>'cedula';
 
   delete from public.carnet_filiales where true;
   insert into public.carnet_filiales (nombre)

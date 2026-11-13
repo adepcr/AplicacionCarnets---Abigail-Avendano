@@ -7,12 +7,12 @@
 //   3. npm run reporte
 //
 // Crea:
-//   datos/afiliados.csv  → solo la columna "cedula" (todas activas, porque el reporte es de activos)
+//   datos/afiliados.csv  → columnas "cedula", "nombre" y "filial" (todas activas, porque el reporte es de activos)
 //   datos/filiales.txt   → una filial por línea, tomadas de los encabezados "101 - SAN JOSE"
 // Después siga con "npm run importar" y "npm run db:subir", como siempre.
 //
-// Del reporte solo se usan las cédulas y los nombres de las filiales: los nombres de las personas,
-// teléfonos, direcciones y fechas NO se copian a ningún lado.
+// Del reporte se usan la cédula, el nombre de la persona y su filial (el nombre y la filial los usa el sistema
+// de votaciones ADEP Vota, que comparte esta lista). Teléfonos, direcciones y fechas NO se copian a ningún lado.
 // ⚠️ datos/reporte.txt tiene datos personales: está excluido de Git y conviene borrarlo al terminar.
 
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
@@ -42,10 +42,23 @@ const OTRA_ID = /^\s*(\d{5,8}|\d{13,15})(\s|$)/;
 const TOTAL_FILIAL = /total de socios por filial:?\s*(\d+)?/i;
 const TOTAL_REPORTE = /n[uú]mero de asociados? en el reporte:?\s*(\d+)?/i;
 
+// Nombre de la persona: letras y espacios hasta el primer número (teléfono, fecha, ...)
+const LETRAS = "A-Za-zÁÉÍÓÚÜÑáéíóúüñ";
+function leerNombre(texto, alFinal) {
+  const patron = alFinal
+    ? new RegExp(`([${LETRAS}][${LETRAS} .'-]*)\\s*$`)
+    : new RegExp(`^\\s*([${LETRAS}][${LETRAS} .'-]*)`);
+  const m = texto.match(patron);
+  const nombre = m ? m[1].replace(/\s+/g, " ").trim() : "";
+  return nombre.length >= 5 && nombre.includes(" ") ? nombre : "";
+}
+const csv = v => /[",;\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v;
+
 const filiales = new Map();        // código → nombre
 const filas = new Map();           // código → filas de personas encontradas (incluye repetidas y otras ids)
 const totalesPdf = new Map();      // código → total que dice el PDF
 const cedulas = new Map();         // cédula → código de filial (la primera en que aparece)
+const nombres = new Map();         // cédula → nombre de la persona (si se pudo leer)
 const repetidas = [];
 const otras = [];
 const enMedio = [];
@@ -71,13 +84,16 @@ lineas.forEach((linea, i) => {
   const tr = linea.match(TOTAL_REPORTE);
   if (tr) { if (tr[1]) totalReporte = Number(tr[1]); else esperando = "reporte"; return; }
 
-  let fila = linea.match(FILA);
-  if (!fila && (fila = linea.match(FILA_MEDIO))) enMedio.push(i + 1);
+  let fila = linea.match(FILA), medio = false;
+  if (!fila && (fila = linea.match(FILA_MEDIO))) { enMedio.push(i + 1); medio = true; }
   if (fila) {
     sumarFila();
     const cedula = fila[1];
     if (cedulas.has(cedula)) { repetidas.push(i + 1); return; }
     cedulas.set(cedula, filialActual);
+    const posicion = linea.indexOf(cedula);
+    const nombre = leerNombre(medio ? linea.slice(0, posicion) : linea.slice(posicion + cedula.length), medio);
+    if (nombre) nombres.set(cedula, nombre);
     return;
   }
   if (OTRA_ID.test(linea)) { sumarFila(); otras.push(i + 1); return; }
@@ -93,11 +109,14 @@ if (cedulas.size === 0) {
   process.exit(1);
 }
 
-writeFileSync(salidaAfiliados, "cedula\n" + [...cedulas.keys()].join("\n") + "\n");
+writeFileSync(salidaAfiliados, "cedula,nombre,filial\n" + [...cedulas].map(([cedula, codigo]) =>
+  [cedula, nombres.get(cedula) ?? "", filiales.get(codigo) ?? ""].map(csv).join(",")).join("\n") + "\n");
 writeFileSync(salidaFiliales, [...new Set(filiales.values())].join("\n") + "\n");
 
 console.log(`Cédulas encontradas: ${cedulas.size}`);
 console.log(`Filiales encontradas: ${filiales.size}`);
+console.log(`Nombres leídos: ${nombres.size} de ${cedulas.size}` + (nombres.size < cedulas.size
+  ? " (a quien le falte, ADEP Vota le conserva el nombre que ya tenía o muestra su cédula)" : ""));
 
 // Comparación con los totales del PDF
 const totalFilas = [...filas.values()].reduce((a, b) => a + b, 0);
