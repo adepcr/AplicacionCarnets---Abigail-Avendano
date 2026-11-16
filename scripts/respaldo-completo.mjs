@@ -23,6 +23,11 @@ import { conexion } from "./entorno.mjs";
 
 const POR_PAGINA = 1000;   // Supabase devuelve como máximo 1000 filas por consulta
 
+// Tablas que NO se copian a propósito. vota_restaurables une cada cédula con lo que votó en las
+// votaciones secretas: está cerrada incluso para la clave secreta, para que el voto siga siendo secreto.
+const PROTEGIDAS = new Set(["vota_restaurables"]);
+const omitidas = [];
+
 // Tablas conocidas de cada sistema, por si Supabase no devuelve la lista completa
 const CONOCIDAS = {
   "Inventario del Archivo": ["archivos", "historial", "prestamos", "roles_usuario"],
@@ -83,6 +88,7 @@ const tablas = [...new Set([...Object.keys(llaves), ...Object.values(CONOCIDAS).
 const porSistema = {};
 let totalFilas = 0;
 for (const tabla of tablas) {
+  if (PROTEGIDAS.has(tabla)) { omitidas.push(tabla); continue; }
   const orden = (llaves[tabla] ?? []).map(c => `${c}.asc`).join(",");
   const filas = [];
   try {
@@ -174,6 +180,7 @@ resumen.push("CÓMO RESTAURAR",
   "  Inventario, ADEP Vota y el prototipo: primero se corre su archivo SQL en Supabase → SQL Editor y luego",
   "  se cargan las filas de tablas/<tabla>.json (Supabase → Table Editor → Insert → Import data, o con la API).",
   "  Pida ayuda a TI antes de restaurar: cargar datos sobre una base en uso puede duplicar o reemplazar filas.", "");
+if (omitidas.length) resumen.push("NO SE COPIAN A PROPÓSITO (protegen el voto secreto; no es un error)", ...omitidas.map(t => `  - ${t}`), "");
 resumen.push(problemas.length ? `⚠️ AVISOS (${problemas.length})` : "Sin avisos: todo se leyó bien.", ...problemas.map(p => `  - ${p}`));
 writeFileSync(`${carpeta}/RESUMEN.txt`, resumen.join("\n") + "\n");
 

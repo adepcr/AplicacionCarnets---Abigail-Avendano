@@ -48,7 +48,7 @@ guardada en Vercel (no en el código ni en GitHub).
   un aviso en Vercel → **Logs**. Detalle en `lib/limpieza.js`.
 - **Espacio:** 1 GB para fotos (unas **30 000 fotos** de ~30 KB) y 500 MB de base de datos, **compartidos
   con lo que ADEP ya tenga** en ese proyecto. Revíselo en Supabase → *Project Settings → Usage*.
-- **No hay respaldos automáticos** en el plan gratis de Supabase: haga `npm run respaldo` **una vez al mes**.
+- **No hay respaldos automáticos** en el plan gratis de Supabase: haga `npm run respaldo` y `npm run respaldo-completo` **una vez al mes** (paso a paso: [RESPALDO.md](RESPALDO.md)).
 - **Vercel gratis (Hobby)** es para uso no comercial. Un carnet de afiliados de una asociación sin fines de
   lucro normalmente entra; si ADEP quiere evitar dudas, existe el plan Pro.
 
