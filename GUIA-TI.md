@@ -100,7 +100,7 @@ al mes**, la persona encargada hace esto (unos 15 minutos), en la carpeta del pr
 5. **Revisar los nombres de filiales** en `datos/filiales.txt` (por ejemplo `OSA(PALMAR NORTE-SUR` → `OSA (PALMAR NORTE-SUR)`) y guardar.
 6. **Revisar y subir:** `npm run importar` y luego `npm run db:subir` (pide escribir SUBIR).
 7. **Borrar** `datos\reporte.txt`: tiene todos los datos personales del reporte.
-8. **Respaldo:** `npm run respaldo` y `npm run respaldo-completo`, y guardar las dos carpetas de `respaldos/` en el lugar seguro de ADEP.
+8. **Respaldo:** `npm run respaldo` y `npm run respaldo-completo`, y guardar las dos carpetas de `respaldos/` en el lugar seguro de ADEP (paso a paso: [RESPALDO.md](RESPALDO.md)).
 9. **Al día siguiente**, abrir `https://carnet-adep.vercel.app/api/despertar`: debe decir `"ok":true` y la cantidad
    de afiliados nueva. Si dice `"ok":false` con un aviso, la lista subida estaba incompleta: repita desde el paso 2.
 
@@ -145,6 +145,8 @@ Los carnets ya creados se conservan. `datos/afiliados.csv` nunca se sube a GitHu
 ## 5. Respaldos
 
 > ⚠️ El plan **gratis** de Supabase **no guarda respaldos automáticos**. El respaldo manual es la única copia.
+
+**Paso a paso para Windows (para quien hace el respaldo cada mes): [RESPALDO.md](RESPALDO.md).**
 
 - **Hacer un respaldo (una vez al mes, como mínimo):** `npm run respaldo`.
   Descarga las tablas (`carnet_afiliados.json`, `carnet_filiales.json`, `carnet_carnets.json`) y todas las fotos a `respaldos/<fecha>/`.
